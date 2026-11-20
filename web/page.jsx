@@ -1,13 +1,15 @@
+import { lessonsByArea, matchesLesson } from './lib/lessons.mjs';
 import { localRequest } from './lib/browser.mjs';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight, BookOpen, Bookmark, ClipboardList, Clock3, GraduationCap, History, LayoutDashboard, ListChecks, RotateCcw, Settings, Target } from 'lucide-react';
 import { answerFor, chapters, fields, matches, optionsFor, publicationError, question, subjects, uniqueQuestions } from './lib/model.mjs';
 
 const tabs = [
-  ['home', '學習總覽', LayoutDashboard], ['chapters','章節重點', BookOpen], ['bank','題庫練習', ListChecks],
-  ['mock','限時模擬考', Clock3], ['wrong','錯題重練', RotateCcw], ['favorites','收藏題目', Bookmark],
-  ['history','作答紀錄', History], ['admin','題庫管理', Settings],
+  ['chapters', '考科', BookOpen], ['bank', '練習', ListChecks], ['mock', '模擬考', Clock3],
+  ['favorites', '收藏', Bookmark], ['wrong', '錯題', RotateCcw], ['history', '紀錄', History],
+  ['home', '統計', LayoutDashboard], ['admin', '管理', Settings],
 ];
+const lessonViews = [['points', '重點'], ['card', '記憶卡'], ['quiz', '練習題']];
 const filterLabels = { year: '年度', exam: '甄試名稱', subject: '科目', topic: '主題' };
 const labels = {
   year:'年度', exam:'甄試名稱', subject:'科目', topic:'章節／主題', number:'原始題號', kind:'題型', prompt:'題幹',
@@ -34,7 +36,12 @@ function Link({ url, children }) {
 
 export default function Study() {
   const [data, setData] = useState(empty);
-  const [tab, setTab] = useState('home');
+  const [tab, setTab] = useState('chapters');
+  const [areaIndex, setAreaIndex] = useState(0);
+  const [lesson, setLesson] = useState(null);
+  const [lessonView, setLessonView] = useState('points');
+  const [flipped, setFlipped] = useState(false);
+  const [chapterAttempt, setChapterAttempt] = useState(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -112,6 +119,13 @@ export default function Study() {
     if (next !== 'attempt') history.replaceState(null, '', location.pathname);
     window.scrollTo(0, 0);
   }
+  function openLesson(entry) {
+    setLesson(entry);
+    setLessonView('points');
+    setFlipped(false);
+    navigate('lesson');
+  }
+
   function openAttempt(id) {
     setActive(id);
     setClock(Date.now());
@@ -120,7 +134,10 @@ export default function Study() {
   }
   async function start(items, mode = '練習') {
     const next = await request('start', { ids: items.map(row => row.id), mode, minutes: Number(minutes) });
-    if (next) openAttempt(next.attempts.at(-1).id);
+    if (!next) return;
+    const id = next.attempts.at(-1).id;
+    if (tab === 'lesson') setChapterAttempt({ id, lesson, areaIndex });
+    openAttempt(id);
   }
 
   async function saveAnd(action, args = {}) {
@@ -139,6 +156,12 @@ export default function Study() {
   const filtered = data.questions.filter(row => matches(row, filters));
   const mockItems = uniqueQuestions(filtered);
   const remaining = Math.max(0, Math.ceil(((attempt?.deadline || clock) - clock) / 1000));
+
+  const area = chapters[areaIndex];
+  const areaLessons = lessonsByArea[areaIndex];
+  const nextLesson = lesson && areaLessons[areaLessons.indexOf(lesson) + 1];
+  const lessonItems = lesson ? data.questions.filter(row => matchesLesson(row, lesson)) : [];
+  const completed = new Set(done.flatMap(row => row.items.filter(item => row.responses[item.id]).map(item => item.id)));
 
   function favorite(row) {
     const saved = data.favorites.includes(row.id);
@@ -180,18 +203,20 @@ export default function Study() {
   }
 
   return <div className="shell">
-    <aside className="sidebar">
-      <div className="brand"><span><GraduationCap size={23}/></span><div>國貿自習室<small>國貿丙級練習</small></div></div>
-      <nav aria-label="主選單">{tabs.map(([key, label, Icon]) => <button key={key} onClick={() => navigate(key)} aria-current={tab === key ? 'page' : undefined}><Icon size={18}/>{label}</button>)}</nav>
-    </aside>
+    <header className="site-header">
+      <div className="site-header-inner">
+        <button className="brand" onClick={() => navigate('chapters')}><span><GraduationCap size={23}/></span>國貿自習室</button>
+        <nav aria-label="主選單">{tabs.map(([key, label, Icon]) => <button key={key} onClick={() => navigate(key)}
+          aria-current={tab === key || (key === 'chapters' && tab === 'lesson') ? 'page' : undefined}><Icon size={17}/>{label}</button>)}</nav>
+      </div>
+    </header>
     <main>
-      <header className="topbar"><span>國貿丙級學習平台</span><span className="edition"><span/> 自編示範版</span></header>
       <div className="content">
         {error && <div className="error" role="alert">{error} {!ready && <button onClick={load}>重新讀取</button>}</div>}
         {!ready ? <p role="status">讀取題庫中…</p> : <>
         {tab === 'home' && <>
           <section className="hero">
-            <div className="hero-copy"><span className="hero-label"><GraduationCap size={18}/> 國貿丙級</span><h1>開始練習國貿丙級</h1>
+            <div className="hero-copy"><span className="hero-label"><GraduationCap size={18}/> 國貿丙級</span><h1>學習統計</h1>
               <p>複習學科與術科章節，透過逐題練習及限時模擬考掌握自己的進度。</p>
               <div className="actions"><button className="button light" onClick={() => navigate('bank')}>開始練習 <ArrowRight size={17}/></button><button className="outline light" onClick={() => navigate('chapters')}>瀏覽章節</button></div>
             </div>
@@ -210,12 +235,66 @@ export default function Study() {
           {historyList(data.attempts.slice(-4).reverse())}
         </>}
         {tab === 'chapters' && <>
-          <h1>考科範圍與章節重點</h1>
-          <div className="stack">{chapters.map(row => <article className="card chapter" key={row.name}>
-            <div className="section-title"><h2>{row.name}</h2><div className="tags"><span>{row.focus}</span></div></div>
-            <ul className="chapter-points">{row.points.map(point => <li key={point}>{point}</li>)}</ul>
-            <button className="text-button" onClick={() => { setFilters({ topic: row.name }); navigate('bank'); }}>練習本章 <ArrowRight size={16}/></button>
-          </article>)}</div>
+          <h1>考科與章節</h1>
+          <div className="study-switch" role="group" aria-label="考科">
+            {chapters.map((row, index) => <button key={row.name} aria-pressed={index === areaIndex}
+              onClick={() => setAreaIndex(index)}>{row.name}</button>)}
+          </div>
+          <section className="card study-panel">
+            <div className="section-title"><h2>{area.name}</h2><span className="muted">{area.focus} · {areaLessons.length} 章</span></div>
+            <div className="lesson-list">{areaLessons.map(row => {
+              const items = data.questions.filter(item => matchesLesson(item, row));
+              const answered = items.filter(item => completed.has(item.id)).length;
+              return <button key={row.id} className="lesson-row" onClick={() => openLesson(row)}>
+                <span><strong>{row.title}</strong><small>1 張記憶卡 · 已作答 {answered}／{items.length} 題</small></span>
+                <ArrowRight size={18} aria-hidden="true"/>
+              </button>;
+            })}</div>
+          </section>
+        </>}
+        {tab === 'lesson' && lesson && <>
+          <button className="text-button back-link" onClick={() => navigate('chapters')}>返回考科總覽</button>
+          <p className="muted">{area.name}</p>
+          <h1>{lesson.title}</h1>
+          <div className="study-switch" role="group" aria-label="章節內容">
+            {lessonViews.map(([key, label]) => <button key={key} aria-pressed={lessonView === key} onClick={() => {
+              setLessonView(key);
+              setFlipped(false);
+            }}>{label}{key === 'quiz' ? '（' + lessonItems.length + '）' : ''}</button>)}
+          </div>
+          {lessonView === 'points' && <section className="card study-panel">
+            <h2>複習重點</h2>
+            <ul className="chapter-points">{lesson.points.map(point => <li key={point}>{point}</li>)}</ul>
+            {lesson.id === 'payments' && <table className="study-table">
+              <caption>三種結算方式比較</caption>
+              <thead><tr><th scope="col">方式</th><th scope="col">銀行的主要角色</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">匯付</th><td>依付款人的指示移轉款項</td></tr>
+                <tr><th scope="row">託收</th><td>按託收指示處理單據及交單</td></tr>
+                <tr><th scope="row">信用狀</th><td>開狀行依信用狀條件對相符提示承擔付款義務</td></tr>
+              </tbody>
+            </table>}
+            {lesson.id === 'freight' && <>
+              <h3>空運計算示例</h3>
+              <ol className="chapter-points">
+                <li>題給實重 24 公斤，材積重量 30 公斤，按較大者計費。</li>
+                <li>選出計費重量 30 公斤。</li>
+                <li>套入每公斤 2 美元的費率，空運費為 30 × 2 = 60 美元。</li>
+              </ol>
+            </>}
+            {['customs', 'ethics'].includes(lesson.id) && <p className="muted">法規適用條件待以主管機關最新公告核對。</p>}
+          </section>}
+          {lessonView === 'card' && <button type="button" className="card flashcard" onClick={() => setFlipped(!flipped)}>
+            <span className="muted">{flipped ? '答案' : '問題'}</span>
+            <strong>{lesson.card[flipped ? 1 : 0]}</strong>
+            <span className="muted">{flipped ? '點擊返回問題' : '點擊翻面'}</span>
+          </button>}
+          {lessonView === 'quiz' && <section>
+            <div className="section-title"><h2>本章練習</h2><button className="button" disabled={!lessonItems.length || busy}
+              onClick={() => start(lessonItems)}>練習本章</button></div>
+            {questionList(lessonItems, '本章尚無題目。')}
+          </section>}
+          {nextLesson && <div className="lesson-footer"><button className="outline" onClick={() => openLesson(nextLesson)}>下一章 · {nextLesson.title}</button></div>}
         </>}
         {tab === 'bank' && <><h1>題庫練習</h1>{filterBar()}<div className="section-title"><h2>{filtered.length} 道題目</h2>
           <button className="button" disabled={!filtered.length || busy} onClick={() => start(filtered)}>練習篩選結果 <ArrowRight size={16}/></button></div>
@@ -258,7 +337,13 @@ export default function Study() {
               <button className="button" disabled={busy} onClick={() => saveAnd('submit')}>交卷 <ArrowRight size={16}/></button></div>
           </div></>}
         {tab === 'attempt' && attempt?.finished && <>
-          <div className="section-title"><h1>作答結果</h1><button className="outline" onClick={() => navigate('history')}>作答紀錄</button></div>
+          <div className="section-title"><h1>作答結果</h1><div className="actions">
+            {chapterAttempt?.id === attempt.id && <button className="outline" onClick={() => {
+              setAreaIndex(chapterAttempt.areaIndex);
+              openLesson(chapterAttempt.lesson);
+              setLessonView('quiz');
+            }}>回本章練習</button>}
+            <button className="outline" onClick={() => navigate('history')}>作答紀錄</button></div></div>
           <div className="card result-summary"><span>答對 <strong>{count(attempt, true)}</strong> 題</span><span>答錯 <strong>{count(attempt, false)}</strong> 題</span><span>未評分 <strong>{count(attempt, null)}</strong> 題</span>
             <button className="button" disabled={busy || !count(attempt, false)} onClick={() => start(attempt.items.filter((_, index) => attempt.results[index] === false), '錯題重練')}>重練本次錯題</button></div>
           <div className="stack">{attempt.items.map((row, index) => <article className="card result" key={row.id}>
