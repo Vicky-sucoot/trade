@@ -1,4 +1,4 @@
-import { lessonsByArea } from './lessons.mjs';
+import { additionalLessons, lessonsByArea } from './lessons.mjs';
 
 export const subjects = ['學科', '術科'];
 export const chapters = [
@@ -90,13 +90,16 @@ function demoQuestion({ id, number, subject, topic, kind, prompt, options, refer
   };
 }
 
-const lessonQuestions = lessonsByArea.flatMap((lessons, areaIndex) =>
-  lessons.filter(entry => entry.exercise).map(entry => {
-    const [prompt, reference, kind = '自我核對', explanation = '請與示範參考答案核對你的作答。'] = entry.exercise;
-    return { id: 'lesson-' + entry.id, subject: areaIndex < 2 ? '學科' : '術科',
-      topic: entry.title, kind, prompt, reference, explanation };
-  }),
-);
+const lessonQuestions = [
+  ...lessonsByArea.flatMap((entries, areaIndex) => entries
+    .filter(entry => entry.exercise && !additionalLessons.includes(entry))
+    .map(entry => [entry, areaIndex])),
+  ...additionalLessons.map((entry, areaIndex) => [entry, areaIndex]),
+].map(([entry, areaIndex]) => {
+  const [prompt, reference, kind = '自我核對', explanation = '請與示範參考答案核對你的作答。', options] = entry.exercise;
+  return { id: 'lesson-' + entry.id, subject: areaIndex < 2 ? '學科' : '術科',
+    topic: entry.title, kind, prompt, reference, explanation, options };
+});
 
 export const seed = {
   questions: [
