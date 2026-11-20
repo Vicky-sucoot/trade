@@ -1,8 +1,9 @@
 function lesson(id, title, points, card, exercise, legacy = []) {
-  return { id, title, points, card, exercise, legacy };
+  const cards = typeof card[0] === 'string' ? [card] : card;
+  return { id, title, points, cards, exercise, legacy };
 }
 
-export const lessonsByArea = [
+const baseLessonsByArea = [
   [
     lesson('workflow', '國際貿易與交易流程', [
       '交易開始時，買方通常先提出詢價，賣方再依品名、規格、數量、交期及貿易條件報價。雙方確認訂單後進入備貨、出運、交單與收款。',
@@ -87,6 +88,59 @@ export const lessonsByArea = [
     ], ['英文 drawee 指的是哪位當事人？', '匯票的付款人。'], ['匯票題指定 at sight。付款期限欄如何理解？', '即期付款。應按題目指定格式填寫。']),
   ],
 ];
+
+export const additionalLessons = [
+  lesson('shipping-documents', '出貨前後的單據流程', [
+    '出貨前以訂單核對品名、數量、交貨條件與交期，再用實際裝箱資料準備商業發票與包裝單。',
+    '出貨後核對運輸單據上的託運人、收貨人、運送路線及件數。若以信用狀結算，再按信用狀列出的單據與期限交單。',
+    '先記下每份單據的用途與負責人，就能在資料不一致時找到該回頭核對的原始資料。',
+  ], [
+    ['包裝單上的箱數應優先和什麼資料核對？', '實際裝箱紀錄，再對照運輸單據所列件數及包裝單位。'],
+    ['出貨後以信用狀結算，交單前應確認什麼？', '所需單據、份數、交單期限及地點。'],
+  ], ['實際裝箱紀錄為 12 箱，包裝單草稿卻寫 10 箱。出貨前應採取哪項措施？', '2', '選擇',
+    '先確認實際裝箱和訂單，再依核對結果修正單據，避免後續申報或交單資料不一致。',
+    '沿用草稿箱數|核對裝箱紀錄並修正草稿|等收到貨款再確認']),
+  lesson('email-order', '訂單確認與延遲通知', [
+    '訂單確認函寫明訂單編號、數量、約定交期及仍待買方確認的條件。',
+    '延遲通知交代受影響的訂單、原定日期、更新後的預估日期，以及何時再次提供進度。',
+    '辨認 acknowledge receipt（確認收到）、estimated shipment date（預估裝運日）和 revised schedule（修訂後的時程）。',
+  ], [
+    ['“We acknowledge receipt of your order.” 是什麼意思？', '我們確認已收到你的訂單。'],
+    ['estimated shipment date 是到貨日期嗎？', '它指預估裝運日期。到貨日期通常寫 estimated arrival date。'],
+  ], ['哪一句表示訂單的預估裝運日已延後至 6 月 18 日？', '3', '選擇',
+    'The estimated shipment date 指預估裝運日，has been moved to 表示日期已改到指定日期。',
+    'We received your order on June 18.|Payment is due on June 18.|The estimated shipment date has been moved to June 18.']),
+  lesson('quote-conversion', 'FOB、CFR 與 CIF 報價換算', [
+    '在題目只要求加回指定費用的情況下，以 FOB 報價加海運費可算出 CFR 報價，再加入保費算出 CIF 報價。',
+    '遇到保費依 CIF 計算的循環關係，先用 CFR 加保費建立等式。保險基礎是 CIF 的 110%、費率為 r 時，可寫成 CIF ×（1 − 1.10 × r）＝ CFR。',
+    '計算時把單價與總價、幣別、指定港口放在同一列核對。',
+  ], [
+    ['費用均已知且幣別相同時，如何由 CFR 計算 CIF？', '將題給保險費加到 CFR 報價。'],
+    ['保費以 CIF 為投保基礎時，先做什麼？', '以 CIF ＝ CFR ＋ 保費列式，再代入投保成數和費率求解。'],
+  ], ['一批貨的 FOB 總價為 5,000 美元，海運費 350 美元，保費 50 美元。題目無其他費用，請算 CIF 總價（美元）。', '5400', '數字',
+    '先算 CFR：5,000 + 350 = 5,350，再加保費 50，得到 CIF 5,400 美元。']),
+  lesson('lc-availability', '信用狀的即期與遠期條件', [
+    '看到 at sight，先辨認是即期條件。看到「日期後若干天」的遠期條件，圈出天數和起算日。',
+    '用題給條款判斷起算點，以裝運日、提單日或其他明定日期為準。實務付款還要確認單據是否相符。',
+    '交單期限與遠期款項到期日是不同的時間點。先核對何時須交單，再算何時到期付款。',
+  ], [
+    ['“60 days after bill of lading date” 的起算點是什麼？', '提單日期，按條款及題目規則加算 60 天。'],
+    ['遠期付款期限和交單期限各回答什麼？', '遠期付款期限用來判斷款項何時到期。交單期限用來判斷何時必須提示單據。'],
+  ], ['信用狀指定「60 days after bill of lading date」。根據題給條款，應以哪個日期起算遠期付款期限？', '1', '選擇',
+    '條款明示以 bill of lading date 為起算點，也就是提單日期。',
+    '提單日期|信用狀開立日期|商業發票日期']),
+  lesson('bill-of-lading', '提單與裝運資料核對', [
+    '提單核對時，逐一確認託運人（shipper）、收貨人（consignee）、裝貨港（port of loading）與卸貨港（port of discharge）。',
+    '依題目或信用狀要求確認裝運資料和裝運日期。另與包裝單核對件數和包裝單位，避免把內裝商品數誤填為箱數。',
+    '有轉運、指定收貨人或通知人等條件時，按題目提供的資料逐欄比對。'],
+  [
+    ['port of discharge 代表什麼？', '卸貨港。'],
+    ['提單件數與包裝單不一致，先核對哪些資料？', '實際出貨的包裝件數、包裝單位，以及運輸單據草稿。'],
+  ], ['填寫提單時，20 箱內共有 240 件商品。題目要求提單包裝欄填箱數，應填多少箱？', '20', '數字',
+    '包裝欄指定以箱計，填實際外包裝數 20 箱。240 是箱內商品件數。']),
+];
+
+export const lessonsByArea = baseLessonsByArea.map((entries, index) => [...entries, additionalLessons[index]]);
 
 export function matchesLesson(item, entry) {
   return entry.title === item.topic || entry.legacy.includes(item.id);

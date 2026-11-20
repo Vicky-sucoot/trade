@@ -40,7 +40,7 @@ export default function Study() {
   const [areaIndex, setAreaIndex] = useState(0);
   const [lesson, setLesson] = useState(null);
   const [lessonView, setLessonView] = useState('points');
-  const [flipped, setFlipped] = useState(false);
+  const [flipped, setFlipped] = useState({});
   const [chapterAttempt, setChapterAttempt] = useState(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
@@ -122,7 +122,7 @@ export default function Study() {
   function openLesson(entry) {
     setLesson(entry);
     setLessonView('points');
-    setFlipped(false);
+    setFlipped({});
     navigate('lesson');
   }
 
@@ -246,7 +246,7 @@ export default function Study() {
               const items = data.questions.filter(item => matchesLesson(item, row));
               const answered = items.filter(item => completed.has(item.id)).length;
               return <button key={row.id} className="lesson-row" onClick={() => openLesson(row)}>
-                <span><strong>{row.title}</strong><small>1 張記憶卡 · 已作答 {answered}／{items.length} 題</small></span>
+                <span><strong>{row.title}</strong><small>{row.cards.length} 張記憶卡 · 已作答 {answered}／{items.length} 題</small></span>
                 <ArrowRight size={18} aria-hidden="true"/>
               </button>;
             })}</div>
@@ -259,7 +259,7 @@ export default function Study() {
           <div className="study-switch" role="group" aria-label="章節內容">
             {lessonViews.map(([key, label]) => <button key={key} aria-pressed={lessonView === key} onClick={() => {
               setLessonView(key);
-              setFlipped(false);
+              setFlipped({});
             }}>{label}{key === 'quiz' ? '（' + lessonItems.length + '）' : ''}</button>)}
           </div>
           {lessonView === 'points' && <section className="card study-panel">
@@ -284,11 +284,12 @@ export default function Study() {
             </>}
             {['customs', 'ethics'].includes(lesson.id) && <p className="muted">法規適用條件待以主管機關最新公告核對。</p>}
           </section>}
-          {lessonView === 'card' && <button type="button" className="card flashcard" onClick={() => setFlipped(!flipped)}>
-            <span className="muted">{flipped ? '答案' : '問題'}</span>
-            <strong>{lesson.card[flipped ? 1 : 0]}</strong>
-            <span className="muted">{flipped ? '點擊返回問題' : '點擊翻面'}</span>
-          </button>}
+          {lessonView === 'card' && <div className="stack">{lesson.cards.map(([prompt, answer], index) => <button
+            key={prompt} type="button" className="card flashcard" onClick={() => setFlipped(current => ({ ...current, [index]: !current[index] }))}>
+            <span className="muted">{flipped[index] ? '答案' : '問題'} {index + 1}／{lesson.cards.length}</span>
+            <strong>{flipped[index] ? answer : prompt}</strong>
+            <span className="muted">{flipped[index] ? '點擊返回問題' : '點擊翻面'}</span>
+          </button>)}</div>}
           {lessonView === 'quiz' && <section>
             <div className="section-title"><h2>本章練習</h2><button className="button" disabled={!lessonItems.length || busy}
               onClick={() => start(lessonItems)}>練習本章</button></div>
