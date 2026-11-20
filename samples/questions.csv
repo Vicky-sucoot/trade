@@ -1,0 +1,3 @@
+year,exam,subject,topic,number,kind,prompt,options,source,page,official,answerSource,reference,explanation,verified,reviewed,demo,rights,rightsDate,duplicate,examLaw,currentLaw
+,CSV 自編示範,學科,貿易單據,1,選擇,哪份文件通常記載箱數與重量？,裝箱單|收據,,,,,1,裝箱單提供包裝與重量明細。,不適用（自編）,待審核,是,自編,,sample-list,不適用,不適用
+,另一份 CSV 自編示範,學科,貿易單據,3,選擇,哪份文件通常記載箱數與重量？,裝箱單|收據,,,,,1,裝箱單提供包裝與重量明細。,不適用（自編）,待審核,是,自編,,sample-list,不適用,不適用
