@@ -1,3 +1,5 @@
+import { lessonsByArea } from './lessons.mjs';
+
 export const subjects = ['學科', '術科'];
 export const chapters = [
   {
@@ -80,12 +82,28 @@ const examples = [
   ['術科','商業信用狀分析','選擇','某信用狀分別列有最遲裝運日與到期日。檢查貨物是否依時出運，應先將運輸單據上的裝運日期與哪一項比較？','到期日|開狀日|最遲裝運日|發票日','3','最遲裝運日用來核對裝運時點。交單時間則須另外對照交單期限及到期日。'],
 ];
 
-export const seed = {
-  questions: examples.map(([subject, topic, kind, prompt, options, reference, explanation], index) => ({
-    ...question({ subject, topic, kind, prompt, options, reference, explanation, exam: '自編示範', number: index + 1,
+function demoQuestion({ id, number, subject, topic, kind, prompt, options, reference, explanation }) {
+  return {
+    ...question({ subject, topic, kind, prompt, options, reference, explanation, exam: '自編示範', number,
       rights: '自編', verified: '不適用（自編）', examLaw: '不適用', currentLaw: '不適用' }),
-    id: 'demo-' + (index + 1), version: 1, published: true,
-  })),
+    id, version: 1, published: true,
+  };
+}
+
+const lessonQuestions = lessonsByArea.flatMap((lessons, areaIndex) =>
+  lessons.filter(entry => entry.exercise).map(entry => {
+    const [prompt, reference, kind = '自我核對', explanation = '請與示範參考答案核對你的作答。'] = entry.exercise;
+    return { id: 'lesson-' + entry.id, subject: areaIndex < 2 ? '學科' : '術科',
+      topic: entry.title, kind, prompt, reference, explanation };
+  }),
+);
+
+export const seed = {
+  questions: [
+    ...examples.map(([subject, topic, kind, prompt, options, reference, explanation], index) =>
+      demoQuestion({ id: 'demo-' + (index + 1), number: index + 1, subject, topic, kind, prompt, options, reference, explanation })),
+    ...lessonQuestions.map((entry, index) => demoQuestion({ ...entry, number: examples.length + index + 1 })),
+  ],
   favorites: [], attempts: [], drafts: [],
 };
 
@@ -117,8 +135,10 @@ export function grade(item, response = '') {
 }
 
 export function matches(item, filters) {
-  const chapter = chapters.find(row => row.name === filters.topic);
-  const topicMatches = !filters.topic || (item.topic || '未提供') === filters.topic || chapter?.topics.includes(item.topic);
+  const area = chapters.findIndex(row => row.name === filters.topic);
+  const topicMatches = !filters.topic || (item.topic || '未提供') === filters.topic
+    || (area !== -1 && (chapters[area].topics.includes(item.topic)
+      || lessonsByArea[area].some(entry => entry.title === item.topic || entry.legacy.includes(item.id))));
   return Boolean(topicMatches) && ['year', 'exam', 'subject'].every(key => !filters[key] || (item[key] || '未提供') === filters[key]);
 }
 

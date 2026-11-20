@@ -71,89 +71,71 @@ p {
 }
 .shell {
   min-height: 100dvh;
-  display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
 }
-.sidebar {
-  padding: 27px 17px;
+
+.site-header {
   background: var(--navy);
-  color: #f7f8fa;
-  position: sticky;
-  top: 0;
-  align-self: start;
-  min-height: 100dvh;
+  color: white;
 }
-.brand {
+
+.site-header-inner {
+  max-width: 1130px;
+  margin: auto;
+  padding: 12px clamp(16px, 4vw, 46px);
   display: flex;
   align-items: center;
-  gap: 11px;
-  margin: 3px 4px 32px;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.brand, .site-header nav button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  min-height: 42px;
+  white-space: nowrap;
+}
+
+.brand {
   font-weight: 780;
   font-size: 1.12rem;
+  padding: 0;
 }
+
 .brand > span {
   display: grid;
   place-items: center;
-  width: 39px;
-  height: 39px;
-  border-radius: 11px;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   background: #345466;
   color: var(--gold);
+}
+
+.site-header nav {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.site-header nav button {
+  padding-inline: 10px;
+}
+
+.site-header nav button[aria-current], .site-header nav button:hover {
+  background: #345466;
 }
 small {
   display: block;
   font-size: 0.79rem;
   margin-top: 4px;
   color: var(--muted);
-}
-.brand small {
-  color: #b6c7d9;
-  font-weight: 500;
-}
-.sidebar nav {
-  display: grid;
-  gap: 5px;
-}
-.sidebar nav button {
-  border: 0;
-  text-align: left;
-  background: transparent;
-  color: #dae5ef;
-  border-radius: 8px;
-  padding: 11px 10px;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  white-space: nowrap;
-}
-.sidebar nav button:hover,
-.sidebar nav button[aria-current] {
-  background: #2d455b;
-  color: #fff;
-}
-.topbar {
-  min-height: 61px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px clamp(16px, 4vw, 47px);
-  gap: 12px;
-  color: var(--muted);
-  font-size: 0.88rem;
-}
-.edition {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  white-space: nowrap;
-}
-.edition span {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #25806c;
 }
 .content {
   max-width: 1130px;
@@ -595,12 +577,6 @@ textarea {
   white-space: nowrap;
 }
 @media (max-width: 870px) {
-  .shell {
-    grid-template-columns: 182px minmax(0, 1fr);
-  }
-  .sidebar {
-    padding-inline: 10px;
-  }
   .hero-art {
     min-width: 145px;
   }
@@ -610,29 +586,11 @@ textarea {
   }
 }
 @media (max-width: 670px) {
-  .shell {
-    display: block;
+  .site-header-inner {
+    gap: 6px;
   }
-  .sidebar {
-    position: static;
-    min-height: 0;
-    padding: 12px;
-  }
-  .brand {
-    margin: 0 0 10px;
-  }
-  .sidebar nav {
-    display: flex;
-    overflow-x: auto;
-    gap: 4px;
-  }
-  .sidebar nav button {
-    padding: 8px;
-    font-size: 0.82rem;
-    min-height: 40px;
-  }
-  .sidebar nav button svg {
-    width: 15px;
+  .site-header nav {
+    flex-basis: 100%;
   }
   .hero {
     min-height: 0;
@@ -674,9 +632,6 @@ textarea {
     padding: 8px 0;
     z-index: 2;
   }
-  .topbar {
-    min-height: 46px;
-  }
 }
 @media (max-width: 360px) {
   .metrics,
@@ -700,4 +655,105 @@ textarea {
 
 .chapter-points li + li {
   margin-top: 0.4rem;
+}
+
+.study-switch {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 4px 10px;
+  margin: 0 -4px 12px;
+}
+
+.study-switch button,
+.lesson-row {
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+}
+
+.study-switch button {
+  flex: none;
+  white-space: nowrap;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-weight: 650;
+}
+
+.study-switch button[aria-pressed="true"] {
+  background: var(--wash);
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.study-panel h2 {
+  margin: 0 0 0.65rem;
+}
+
+.study-panel .section-title h2 {
+  margin: 0;
+}
+
+.lesson-list {
+  display: grid;
+  gap: 8px;
+}
+
+.lesson-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  text-align: start;
+  width: 100%;
+}
+
+.lesson-row:hover {
+  background: var(--wash);
+}
+
+.flashcard {
+  width: 100%;
+  display: grid;
+  gap: 14px;
+  place-content: center;
+  min-height: 170px;
+  text-align: center;
+  background: var(--wash);
+  color: var(--ink);
+  line-height: 1.55;
+}
+
+.flashcard strong {
+  font-size: 1.15rem;
+}
+
+.lesson-footer {
+  margin-top: 14px;
+  text-align: end;
+}
+
+.back-link {
+  padding-inline: 0;
+}
+
+.study-table {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: start;
+}
+
+.study-table caption {
+  font-weight: 700;
+  text-align: start;
+  margin-bottom: 8px;
+}
+
+.study-table th,
+.study-table td {
+  border: 1px solid var(--line);
+  padding: 8px;
+  text-align: start;
 }
